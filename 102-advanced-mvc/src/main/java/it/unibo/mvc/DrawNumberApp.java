@@ -1,12 +1,26 @@
 package it.unibo.mvc;
 
+import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
 /**
  */
 public final class DrawNumberApp implements DrawNumberViewObserver {
+    private static final String OUTPUT = "src" + File.separator +
+    "main" + File.separator +
+    "resources" + File.separator +
+    File.separator + "output.txt";
+
+    private static final String FILEPATH = "src" + File.separator +
+    "main" + File.separator +
+    "resources" + File.separator +
+    File.separator + "config.yml";
+
     private static final int MIN = 0;
     private static final int MAX = 100;
     private static final int ATTEMPTS = 10;
@@ -22,12 +36,36 @@ public final class DrawNumberApp implements DrawNumberViewObserver {
         /*
          * Side-effect proof
          */
+        int tempMinimum = MIN;
+        int tempMaximum = MAX;
+        int tempAttempts = ATTEMPTS;
+        try(final BufferedReader buffered = new BufferedReader(new FileReader(FILEPATH))) {
+            String readedLine;
+            while((readedLine = buffered.readLine()) != null) {
+                final String[] savedSettings = readedLine.split(":");
+                if(savedSettings.length == 2) {
+                    final String setting = savedSettings[0].trim();
+                    final int settingValue = Integer.parseInt(savedSettings[1].trim());
+                    if("minimum".equals(setting)) {
+                        tempMinimum = settingValue;
+                    } else if("maximum".equals(setting)) {
+                        tempMaximum = settingValue;
+                    } else if("attempts".equals(setting)) {
+                        tempAttempts = settingValue;
+                    } else {
+                        throw new IllegalStateException("The settings file is not valid");
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         this.views = Arrays.asList(Arrays.copyOf(views, views.length));
         for (final DrawNumberView view: views) {
             view.setObserver(this);
             view.start();
         }
-        this.model = new DrawNumberImpl(MIN, MAX, ATTEMPTS);
+        this.model = new DrawNumberImpl(tempMinimum, tempMaximum, tempAttempts);
     }
 
     @Override
@@ -66,7 +104,12 @@ public final class DrawNumberApp implements DrawNumberViewObserver {
      * @throws FileNotFoundException 
      */
     public static void main(final String... args) throws FileNotFoundException {
-        new DrawNumberApp(new DrawNumberViewImpl());
+        new DrawNumberApp(
+            new DrawNumberViewImpl(),
+            new DrawNumberViewImpl(),
+            new PrintStreamView(System.out),
+            new PrintStreamView(OUTPUT)
+        );
     }
 
 }

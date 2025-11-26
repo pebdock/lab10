@@ -1,0 +1,8 @@
+You must enter a number
+You must enter a number
+Your number is too small
+Your number is too small
+Your number is too small
+Your number is too big
+Your number is too small
+You lost
